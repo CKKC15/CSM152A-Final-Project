@@ -52,6 +52,7 @@ module seven_segment(
             4'd7: seg = 7'b0001111;
             4'd8: seg = 7'b0000000;
             4'd9: seg = 7'b0000100;
+            4'd10: seg = 7'b0001000; //should be the letter 'A' for wildcard? mb check
             default: seg = 7'b1111111; // blank
         endcase
     end
