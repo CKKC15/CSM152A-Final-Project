@@ -39,9 +39,9 @@ end
 // for 4 digits, chance of at least 1 wildcard appearing is 1 - (1-1/32)^4 = ~12%
 // we can change it to "<2" to double chance of wildcard appearing
 always @(posedge clk) begin
-    d0 <= ((lfsr[4:0] < 1) ? 10 : (lfsr[3:0] % 10));
-    d1 <= ((lfsr[8:4] < 1) ? 10 : (lfsr[7:4] % 10));
-    d2 <= ((lfsr[12:8] < 1) ? 10 : (lfsr[11:8] % 10));
-    d3 <= ((lfsr[15:11] < 1) ? 10 : (lfsr[15:12] % 10));
+    d0 <= ((lfsr[4:0] < 2) ? 10 : (lfsr[3:0] % 10)); 
+    d1 <= ((lfsr[8:4] < 2) ? 10 : (lfsr[7:4] % 10));
+    d2 <= ((lfsr[12:8] < 2) ? 10 : (lfsr[11:8] % 10));
+    d3 <= ((lfsr[15:11] < 2) ? 10 : (lfsr[15:12] % 10));
 end
 endmodule
