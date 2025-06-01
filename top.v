@@ -3,13 +3,19 @@ module top(
     input rst, // reset button
     input btn_roll, // when roll button is pressed
     input btn_stop, // to stop when wildcard
+    input auto_roll_enable, // new switch input
     output [6:0] seg, // seven segment cathods
     output [3:0] an // seven segment anodes
 );
 
+// auto roll variables
+reg [31:0] auto_roll_timer = 0;
+wire auto_roll_ready = (auto_roll_timer >= 100000000); // 1 second
+wire auto_roll_trigger = auto_roll_enable && auto_roll_ready && !isSpinning && !processing_wildcard;
+
 // Button edge detection
 reg prev_btn = 0;
-wire roll_edge = (~prev_btn & btn_roll);
+wire roll_edge = (~prev_btn & btn_roll) || auto_roll_trigger;
 
 reg seeded = 0;
 wire seed_en = (roll_edge & ~seeded);
@@ -64,6 +70,13 @@ always @(posedge clk) begin
     slow_time2 <= slow_time2 + 1;
     slow_time3 <= slow_time3 + 1;
     
+    
+    if (!isSpinning && !processing_wildcard && auto_roll_enable) begin
+        auto_roll_timer <= auto_roll_timer + 1;
+    end else begin
+        auto_roll_timer <= 0; // reset if rolling or wildcarding
+    end
+    
     if (roll_edge && !isSpinning && !processing_wildcard) begin //should trigger first time button is pressed
         isSpinning <= 1;
         timerDuration <= 300000000; //how long the spinning effect should last, i think around 3sec but mb change
@@ -92,8 +105,8 @@ always @(posedge clk) begin
     end else if (waiting_before_wildcard) begin
         wildcard_wait_counter <= wildcard_wait_counter + 1;
     
-        // Wait for 1s = 100M cycles at 100 MHz
-        if (wildcard_wait_counter >= 100000000) begin
+        // Wait for 0.5s = 100M cycles at 100 MHz
+        if (wildcard_wait_counter >= 50000000) begin
             waiting_before_wildcard <= 0;
             processing_wildcard <= 1;
             $display("Entering wildcard phase after delay");
