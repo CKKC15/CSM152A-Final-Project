@@ -2,6 +2,7 @@ module seven_segment(
     input clk,                   // 100MHz clock
     input rst,
     input [3:0] digit0, digit1, digit2, digit3,
+    input blink,
     output reg [6:0] seg,        // Cathodes (a-g), active low
     output reg [3:0] anode       // Anodes (digit select), active low
 );
@@ -24,18 +25,26 @@ module seven_segment(
             2'b00: begin
                 anode = 4'b1110;              // enable digit 0
                 current_bcd = digit0;
+                if (blink)
+                    current_bcd = 11;
             end
             2'b01: begin
                 anode = 4'b1101;              // enable digit 1
                 current_bcd = digit1;
+                if (blink)
+                    current_bcd = 11;
             end
             2'b10: begin
                 anode = 4'b1011;              // enable digit 2
                 current_bcd = digit2;
+                if (blink)
+                    current_bcd = 11;
             end
             2'b11: begin
                 anode = 4'b0111;              // enable digit 3
                 current_bcd = digit3;
+                if (blink)
+                    current_bcd = 11;
             end
         endcase
     end
