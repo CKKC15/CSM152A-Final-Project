@@ -12,8 +12,8 @@ set_property SEVERITY {Warning} [get_drc_checks UCIO-1]
 
 ## Switches
 set_property -dict { PACKAGE_PIN V17   IOSTANDARD LVCMOS33 } [get_ports auto_roll_enable]
-#set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports adj]
-#set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports {sw[2]}]
+set_property -dict { PACKAGE_PIN V16   IOSTANDARD LVCMOS33 } [get_ports balance_mode]
+set_property -dict { PACKAGE_PIN W16   IOSTANDARD LVCMOS33 } [get_ports bet_mode]
 #set_property -dict { PACKAGE_PIN W17   IOSTANDARD LVCMOS33 } [get_ports {sw[3]}]
 #set_property -dict { PACKAGE_PIN W15   IOSTANDARD LVCMOS33 } [get_ports {sw[4]}]
 #set_property -dict { PACKAGE_PIN V15   IOSTANDARD LVCMOS33 } [get_ports {sw[5]}]
@@ -84,14 +84,30 @@ set_property -dict { PACKAGE_PIN T17   IOSTANDARD LVCMOS33 } [get_ports btn_stop
 #set_property -dict { PACKAGE_PIN G3   IOSTANDARD LVCMOS33 } [get_ports {JA[7]}];#Sch name = JA10
 
 ##Pmod Header JB
-#set_property -dict { PACKAGE_PIN A14   IOSTANDARD LVCMOS33 } [get_ports {JB[0]}];#Sch name = JB1
-#set_property -dict { PACKAGE_PIN A16   IOSTANDARD LVCMOS33 } [get_ports {JB[1]}];#Sch name = JB2
-#set_property -dict { PACKAGE_PIN B15   IOSTANDARD LVCMOS33 } [get_ports {JB[2]}];#Sch name = JB3
-#set_property -dict { PACKAGE_PIN B16   IOSTANDARD LVCMOS33 } [get_ports {JB[3]}];#Sch name = JB4
-#set_property -dict { PACKAGE_PIN A15   IOSTANDARD LVCMOS33 } [get_ports {JB[4]}];#Sch name = JB7
-#set_property -dict { PACKAGE_PIN A17   IOSTANDARD LVCMOS33 } [get_ports {JB[5]}];#Sch name = JB8
-#set_property -dict { PACKAGE_PIN C15   IOSTANDARD LVCMOS33 } [get_ports {JB[6]}];#Sch name = JB9
-#set_property -dict { PACKAGE_PIN C16   IOSTANDARD LVCMOS33 } [get_ports {JB[7]}];#Sch name = JB10
+##Sch name = JB1
+set_property PACKAGE_PIN A14 	 [get_ports {cols[0]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {cols[0]}]
+##Sch name = JB2                            
+set_property PACKAGE_PIN A16 	 [get_ports {cols[1]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {cols[1]}]
+##Sch name = JB3                            
+set_property PACKAGE_PIN B15 	 [get_ports {cols[2]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {cols[2]}]
+##Sch name = JB4                             
+set_property PACKAGE_PIN B16 	 [get_ports {cols[3]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {cols[3]}]
+##Sch name = JB7
+set_property PACKAGE_PIN A15 	 [get_ports {rows[0]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {rows[0]}]
+##Sch name = JB8                            
+set_property PACKAGE_PIN A17 	 [get_ports {rows[1]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {rows[1]}]
+##Sch name = JB9                             
+set_property PACKAGE_PIN C15 	 [get_ports {rows[2]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {rows[2]}]
+##Sch name = JB10                             
+set_property PACKAGE_PIN C16 	 [get_ports {rows[3]}]					
+set_property IOSTANDARD LVCMOS33 [get_ports {rows[3]}]
 
 ##Pmod Header JC
 #set_property -dict { PACKAGE_PIN K17   IOSTANDARD LVCMOS33 } [get_ports {JC[0]}];#Sch name = JC1

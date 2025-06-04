@@ -7,8 +7,9 @@ module top(
     input balance_mode, //switch for balance mode
     input bet_mode, //switch for bet mode
     output [6:0] seg, // seven segment cathods
-    output [3:0] an // seven segment anodes
-
+    output [3:0] an, // seven segment anodes
+    input [3:0] rows,   // Pmod JB pins 10 to 7
+    output [3:0] cols  // Pmod JB pins 4 to 1
 );
 
 // auto roll variables
@@ -46,14 +47,10 @@ reg [31:0] wildcard_wait_counter = 0;
 
 //balance amount
 reg [15:0] balance = 1000; //start at 1000 dollars
-reg [3:0] SAVEdigit0 = 0;
-reg [3:0] SAVEdigit1 = 0;
-reg [3:0] SAVEdigit2 = 0;
-reg [3:0] SAVEdigit3 = 0;
 
 //bet stuff
-reg [15:0] bet = 100; //default bet amount at 100 dollars
-reg gameStart = 1;
+reg [15:0] bet_amount = 100;  //default 100
+reg [15:0] bet_amount_store = 100;
 
 //game END statuses
 reg gameWin = 0;
@@ -81,6 +78,16 @@ rng rng_inst(
     .d3(rng3)
 );
 
+wire [3:0] key;
+reg bet_valid;
+// keypad
+keypad key_pad(
+    .clk_100MHz(clk),
+    .row(rows),
+	.col(cols),
+	.key_out(key)
+);
+
 // only update when button is pressed
 reg [3:0] digit0 = 0, digit1 = 0, digit2 = 0, digit3 = 0;
 
@@ -92,15 +99,31 @@ always @(posedge clk) begin
             blink <= ~blink;
         end
     end else begin
-        blink <= 0
+        blink <= 0;
+    end
+end
+
+always @(key) begin
+    if (bet_mode) begin
+        case (key)
+            4'h1: bet_amount_store <= 100;
+            4'h2: bet_amount_store <= 200;
+            4'h3: bet_amount_store <= 300;
+            4'h4: bet_amount_store <= 400; 
+            4'h5: bet_amount_store <= 500;
+            4'h6: bet_amount_store <= 600;
+            4'h7: bet_amount_store <= 700;
+            4'h8: bet_amount_store <= 800;
+            4'h9: bet_amount_store <= 900;
+        endcase
     end
 end
 
 always @(posedge clk) begin
-    if (balance >= 9999) begin //first check for gameEnd conditions
+    if (balance >= 1500) begin //first check for gameEnd conditions
         gameWin <= 1;
     end
-    if (balance <= 0) begin
+    if (balance <= 500) begin
         gameLoss <= 1;
     end
 
@@ -120,17 +143,29 @@ always @(posedge clk) begin
         digit2 <= (balance / 100) % 10;
         digit3 <= (balance / 1000) % 10;
     end else if (bet_mode) begin
-        //CODE HERE TO GET INPUT FOR bet
-        //RIGHT NOW JUST INCREMENTS BY 100, should use pmod keypad to INPUT HERE
-
-        //Need to make sure bet >= 1 and bet <= balance.
-        bet <= bet + 100;
+        if (bet_amount_store <= balance) begin
+            // valid bet
+            case (bet_amount_store)
+                100: begin bet_amount <= 100; digit3 <= 4'd0; digit2 <= 4'd1; digit1 <= 4'd0; digit0 <= 4'd0; end
+                200: begin bet_amount <= 200; digit3 <= 4'd0; digit2 <= 4'd2; digit1 <= 4'd0; digit0 <= 4'd0; end
+                300: begin bet_amount <= 300; digit3 <= 4'd0; digit2 <= 4'd3; digit1 <= 4'd0; digit0 <= 4'd0; end
+                400: begin bet_amount <= 400; digit3 <= 4'd0; digit2 <= 4'd4; digit1 <= 4'd0; digit0 <= 4'd0; end
+                500: begin bet_amount <= 500; digit3 <= 4'd0; digit2 <= 4'd5; digit1 <= 4'd0; digit0 <= 4'd0; end
+                600: begin bet_amount <= 600; digit3 <= 4'd0; digit2 <= 4'd6; digit1 <= 4'd0; digit0 <= 4'd0; end
+                700: begin bet_amount <= 700; digit3 <= 4'd0; digit2 <= 4'd7; digit1 <= 4'd0; digit0 <= 4'd0; end
+                800: begin bet_amount <= 800; digit3 <= 4'd0; digit2 <= 4'd8; digit1 <= 4'd0; digit0 <= 4'd0; end
+                900: begin bet_amount <= 900; digit3 <= 4'd0; digit2 <= 4'd9; digit1 <= 4'd0; digit0 <= 4'd0; end
+            endcase
+        end else begin
+            // invalid so display 0
+            digit3 <= 4'd0;
+            digit2 <= 4'd0;
+            digit1 <= 4'd0;
+            digit0 <= 4'd0;
+            bet_amount <= 0;
+        end
+   
     end else begin
-        digit0 <= SAVEdigit0; //restore state of digits if necessary (cuz of balance/bet)
-        digit1 <= SAVEdigit1;
-        digit2 <= SAVEdigit2;
-        digit3 <= SAVEdigit3;
-
         slow_time0 <= slow_time0 + 1;
         slow_time1 <= slow_time1 + 1;
         slow_time2 <= slow_time2 + 1;
@@ -144,29 +179,6 @@ always @(posedge clk) begin
         end
         
         if (roll_edge && !isSpinning && !processing_wildcard) begin //should trigger first time button is pressed
-            if (!gameStart) begin //if game didn't just start, then we just finished getting 4 digits and should get results
-                if (digit0 == digit1 && digit1 == digit2 && digit2 == digit3) begin
-                    balance <= balance + (bet * 15); //4 of the same
-                end else if (
-                    (digit0 == digit1 && digit1 == digit2) ||
-                    (digit0 == digit1 && digit1 == digit3) ||
-                    (digit0 == digit2 && digit2 == digit3) ||
-                    (digit1 == digit2 && digit2 == digit3)
-                ) begin
-                    balance <= balance + (bet * 7); //3 of the same
-                end else if (
-                    (digit0 == digit1) || (digit0 == digit2) || (digit0 == digit3) ||
-                    (digit1 == digit2) || (digit1 == digit3) ||
-                    (digit2 == digit3)
-                ) begin
-                    balance <= balance + (bet * 2); //2 fo the same
-                end else begin
-                    balance <= balance - bet; //nothing, lose money
-                end
-
-            end
-            
-            gameStart = 0;
             isSpinning <= 1;
             timerDuration <= 300000000; //how long the spinning effect should last, i think around 3sec but mb change
             
@@ -175,10 +187,10 @@ always @(posedge clk) begin
 
         end else if (isSpinning && timerDuration < 1) begin //spinning stop, display actual numbers
             isSpinning <= 0;
-            digit0 <= rng0;
-            digit1 <= rng1;
-            digit2 <= rng2;
-            digit3 <= rng3;
+            digit0 = rng0;
+            digit1 = rng1;
+            digit2 = rng2;
+            digit3 = rng3;
             
             next_mask = {
                 (rng3 == 10),
@@ -193,6 +205,27 @@ always @(posedge clk) begin
                 waiting_before_wildcard <= 1;
                 wildcard_wait_counter <= 0;
             end
+            // no wildcards so check for winnings or losings
+            else begin
+                if (digit0 == digit1 && digit1 == digit2 && digit2 == digit3) begin
+                    balance <= balance + (bet_amount * 15); //4 of the same
+                end else if (
+                    (digit0 == digit1 && digit1 == digit2) ||
+                    (digit0 == digit1 && digit1 == digit3) ||
+                    (digit0 == digit2 && digit2 == digit3) ||
+                    (digit1 == digit2 && digit2 == digit3)
+                ) begin
+                    balance <= balance + (bet_amount * 7); //3 of the same
+                end else if (
+                    (digit0 == digit1) || (digit0 == digit2) || (digit0 == digit3) ||
+                    (digit1 == digit2) || (digit1 == digit3) ||
+                    (digit2 == digit3)
+                ) begin
+                    balance <= balance + (bet_amount * 2); //2 fo the same
+                end else begin
+                    balance <= balance - bet_amount; //nothing, lose money
+                end
+          end
         
         end else if (waiting_before_wildcard) begin
             wildcard_wait_counter <= wildcard_wait_counter + 1;
@@ -237,19 +270,19 @@ always @(posedge clk) begin
         end else if (processing_wildcard) begin
             case (current_wildcard)
                 2'd0: if (wildcard_mask[0] && slow_time0 >= 10000000) begin
-                    digit0 <= (digit0 + 1) % 10;
+                    digit0 = (digit0 + 1) % 10;
                     slow_time0 <= 0;
                 end
                 2'd1: if (wildcard_mask[1] && slow_time1 >= 10000000) begin
-                    digit1 <= (digit1 + 1) % 10;
+                    digit1 = (digit1 + 1) % 10;
                     slow_time1 <= 0;
                 end
                 2'd2: if (wildcard_mask[2] && slow_time2 >= 10000000) begin
-                    digit2 <= (digit2 + 1) % 10;
+                    digit2 = (digit2 + 1) % 10;
                     slow_time2 <= 0;
                 end
                 2'd3: if (wildcard_mask[3] && slow_time3 >= 10000000) begin
-                    digit3 <= (digit3 + 1) % 10;
+                    digit3 = (digit3 + 1) % 10;
                     slow_time3 <= 0;
                 end
             endcase
@@ -268,18 +301,31 @@ always @(posedge clk) begin
                 end else if (current_wildcard < 1 && wildcard_mask[current_wildcard + 3]) begin
                     current_wildcard <= current_wildcard + 3;
                 end else begin
+                    // done processing wildcards
+                        if (digit0 == digit1 && digit1 == digit2 && digit2 == digit3) begin
+                            balance <= balance + (bet_amount * 15); //4 of the same
+                        end else if (
+                            (digit0 == digit1 && digit1 == digit2) ||
+                            (digit0 == digit1 && digit1 == digit3) ||
+                            (digit0 == digit2 && digit2 == digit3) ||
+                            (digit1 == digit2 && digit2 == digit3)
+                        ) begin
+                            balance <= balance + (bet_amount * 7); //3 of the same
+                        end else if (
+                            (digit0 == digit1) || (digit0 == digit2) || (digit0 == digit3) ||
+                            (digit1 == digit2) || (digit1 == digit3) ||
+                            (digit2 == digit3)
+                        ) begin
+                            balance <= balance + (bet_amount * 2); //2 fo the same
+                        end else begin
+                            balance <= balance - bet_amount; //nothing, lose money
+                        end
+        
+                    end
                     processing_wildcard <= 0;
                 end
             end
-        end
-
-        SAVEdigit0 <= digit0; //save the state of current digits
-        SAVEdigit1 <= digit1;
-        SAVEdigit2 <= digit2;
-        SAVEdigit3 <= digit3;
-
-    end
-    
+        end   
 end
 
 // seven segment display
